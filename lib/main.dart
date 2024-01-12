@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/AI/minimax.dart';
 import 'package:flutter_application_1/block_table.dart';
 import 'package:flutter_application_1/coordinate.dart';
 import 'package:flutter_application_1/game_table.dart';
-import 'package:flutter_application_1/men.dart';
+import 'package:flutter_application_1/pieces.dart';
 
 void main() => runApp(MyApp());
 
@@ -51,18 +52,7 @@ class _MyGamePageState extends State<MyGamePage> {
   void initGame() {
     modeWalking = GameTable.MODE_WALK_NORMAL;
     gameTable = GameTable(countRow: 8, countCol: 8);
-    gameTable.initMenOnTable();
-
-    // For test
-//    gameTable.currentPlayerTurn = 2;
-//    gameTable.addMen(Coordinate(row: 0, col: 7), player: 2, isKing: true);
-//    gameTable.addMen(Coordinate(row: 2, col: 5), player: 1);
-//    gameTable.addMen(Coordinate(row: 4, col: 5), player: 1, isKing: true);
-//    gameTable.addMen(Coordinate(row: 6, col: 5), player: 1);
-//    gameTable.addMen(Coordinate(row: 4, col: 1), player: 1, isKing: true);
-//    gameTable.addMen(Coordinate(row: 1, col: 2), player: 1);
-//    gameTable.addMen(Coordinate(row: 1, col: 4), player: 1);
-//    gameTable.addMen(Coordinate(row: 3, col: 6), player: 1);
+    gameTable.initPiecesOnTable();
   }
 
   @override
@@ -155,23 +145,23 @@ class _MyGamePageState extends State<MyGamePage> {
     }
 
     Widget menWidget;
-    if (block.men != null) {
-      Men men = gameTable.getBlockTable(coor).men;
+    if (block.pieces != null) {
+      Pieces pieces = gameTable.getBlockTable(coor).pieces;
 
       menWidget = Center(
           child: buildMenWidget(
-              player: men.player, isKing: men.isKing, size: blockSize));
+              player: pieces.player, isKing: pieces.isKing, size: blockSize));
 
-      if (men.player == gameTable.currentPlayerTurn) {
-        menWidget = Draggable<Men>(
+      if (pieces.player == gameTable.currentPlayerTurn) {
+        menWidget = Draggable<Pieces>(
             child: menWidget,
             feedback: menWidget,
             childWhenDragging: Container(),
-            data: men,
+            data: pieces,
             onDragStarted: () {
               setState(() {
                 print("walking mode = ${modeWalking}");
-                gameTable.highlightWalkable(men, mode: modeWalking);
+                gameTable.highlightWalkable(pieces, mode: modeWalking);
               });
             },
             onDragEnd: (details) {
@@ -184,28 +174,42 @@ class _MyGamePageState extends State<MyGamePage> {
       menWidget = Container();
     }
 
-    if (!gameTable.hasMen(coor) && !gameTable.isBlockTypeF(coor)) {
-      return DragTarget<Men>(builder: (context, candidateData, rejectedData) {
+    if (!gameTable.hasPieces(coor) && !gameTable.isBlockTypeF(coor)) {
+      return DragTarget<Pieces>(
+          builder: (context, candidateData, rejectedData) {
         return buildBlockTableContainer(colorBackground, menWidget);
-      }, onWillAccept: (men) {
+      }, onWillAccept: (pieces) {
         BlockTable blockTable = gameTable.getBlockTable(coor);
+        // print("askjdsbdasjscnao");
+        // print(gameTable.currentPlayerTurn);
         return blockTable.isHighlight || blockTable.isHighlightAfterKilling;
-      }, onAccept: (men) {
+      }, onAccept: (pieces) {
         print("onAccept");
         setState(() {
-          gameTable.moveMen(men, Coordinate.of(coor));
+          gameTable.movePieces(pieces, Coordinate.of(coor));
           gameTable.checkKilled(coor);
-          if (gameTable.checkKillableMore(men, coor)) {
+          if (gameTable.checkKillableMore(pieces, coor)) {
             modeWalking = GameTable.MODE_WALK_AFTER_KILLING;
           } else {
             if (gameTable.isKingArea(
                 player: gameTable.currentPlayerTurn, coor: coor)) {
-              men.upgradeToKing();
+              pieces.upgradeToKing();
             }
             modeWalking = GameTable.MODE_WALK_NORMAL;
             gameTable.clearHighlightWalkable();
             gameTable.togglePlayerTurn();
           }
+          copyGameTable(GameTable primary_gameTable) {
+            GameTable newGameTable = GameTable();
+            newGameTable.table = copyTable(primary_gameTable.table);
+            newGameTable.currentPlayerTurn =
+                primary_gameTable.currentPlayerTurn;
+            return newGameTable;
+          }
+
+          print(
+              "min eval is ${minimax(2, gameTable.currentPlayerTurn, copyGameTable(gameTable))}");
+          gameTable.printer();
         });
       });
     }

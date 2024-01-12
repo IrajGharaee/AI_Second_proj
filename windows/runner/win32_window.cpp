@@ -98,7 +98,7 @@ const wchar_t* WindowClassRegistrar::GetWindowClass() {
     window_class.hIcon =
         LoadIcon(window_class.hInstance, MAKEINTRESOURCE(IDI_APP_ICON));
     window_class.hbrBackground = 0;
-    window_class.lpszMenuName = nullptr;
+    window_class.lpszPiecesuName = nullptr;
     window_class.lpfnWndProc = Win32Window::WndProc;
     RegisterClass(&window_class);
     class_registered_ = true;

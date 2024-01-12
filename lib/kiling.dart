@@ -1,11 +1,11 @@
 // ignore: unused_import
-import 'package:flutter_application_1/men.dart';
+import 'package:flutter_application_1/pieces.dart';
 
 class Killed {
   var isKilled;
-  var men;
+  var pieces;
 
-  Killed({this.isKilled = false, required this.men});
+  Killed({this.isKilled = false, required this.pieces});
 
   Killed.none() {
     isKilled = false;

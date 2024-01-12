@@ -1,16 +1,16 @@
 import 'package:flutter_application_1/block_table.dart';
 import 'package:flutter_application_1/coordinate.dart';
 import 'package:flutter_application_1/kiling.dart';
-import 'package:flutter_application_1/men.dart';
+import 'package:flutter_application_1/pieces.dart';
 
 // typedef OnWalkableAfterKilling = bool Function(
 //     Coordinate newCoor, Killed killed);
 
 bool isWalkableAfterKilling(Coordinate after_kiling, Killed killed) {
-  if (killed.men.player == 1) {
-    return after_kiling.row >= killed.men.coordinate.row;
+  if (killed.pieces.player == 1) {
+    return after_kiling.row >= killed.pieces.coordinate.row;
   } else {
-    return after_kiling.row <= killed.men.coordinate.row;
+    return after_kiling.row <= killed.pieces.coordinate.row;
   }
 }
 
@@ -24,17 +24,18 @@ class GameTable {
   static const int MODE_WALK_AFTER_KILLING =
       2; // walk after kill to 2 3 4.. enemy.
   static const int MODE_AFTER_KILLING =
-      3; // calculation to future that men can walk.
+      3; // calculation to future that pieces can walk.
 
   int countRow = 8;
   int countCol = 8;
-  List<List<BlockTable>> table;
+  var table;
   int currentPlayerTurn = 2;
-
   List<Coordinate> listTempForKingWalkCalculation = [];
+  static List the_one = [];
 
   GameTable({this.countRow = 8, this.countCol = 8}) : table = [] {
     init();
+    the_one.add(this);
   }
 
   init() {
@@ -49,16 +50,16 @@ class GameTable {
     }
   }
 
-  void initMenOnTable() {
-    initMenOnTableRow(player: 1, row: 0);
-    initMenOnTableRow(player: 1, row: 1);
-    initMenOnTableRow(player: 2, row: countRow - 2);
-    initMenOnTableRow(player: 2, row: countRow - 1);
+  void initPiecesOnTable() {
+    initPiecesOnTableRow(player: 1, row: 0);
+    initPiecesOnTableRow(player: 1, row: 1);
+    initPiecesOnTableRow(player: 2, row: countRow - 2);
+    initPiecesOnTableRow(player: 2, row: countRow - 1);
   }
 
-  void initMenOnTableRow({int player = 1, int row = 0}) {
+  void initPiecesOnTableRow({int player = 1, int row = 0}) {
     for (int col = 0; col < countCol; col++) {
-      addMen(Coordinate(row: row, col: col), player: player);
+      addPieces(Coordinate(row: row, col: col), player: player);
     }
   }
 
@@ -73,43 +74,67 @@ class GameTable {
     }
   }
 
-  highlightWalkable(Men men, {int mode = MODE_WALK_NORMAL}) {
-    if (!isBlockAvailable(men.coordinate)) {
+  printer() {
+    print("table:");
+    for (var row in this.table) {
+      var tmp = [];
+      for (BlockTable block in row) {
+        if (block.pieces != null) {
+          tmp.add(block.pieces.player);
+        } else {
+          tmp.add("X");
+        }
+      }
+      print(tmp);
+    }
+    var all_pieces = Pieces.get_all_pieces();
+    List tmp = [];
+    print("pieces");
+    for (var p in all_pieces) {
+      tmp = [];
+      tmp.add(p.coordinate.row);
+      tmp.add(p.coordinate.col);
+      tmp.add(p.player);
+      print(tmp);
+    }
+  }
+
+  highlightWalkable(Pieces pieces, {int mode = MODE_WALK_NORMAL}) {
+    if (!isBlockAvailable(pieces.coordinate)) {
       return;
     }
 
-    if (men.player == 2) {
-      if (men.isKing) {
+    if (pieces.player == 2) {
+      if (pieces.isKing) {
         listTempForKingWalkCalculation.clear();
-        checkWalkableKing(men, mode);
+        checkWalkableKing(pieces, mode);
       } else {
-        checkWalkablePlayer2(men, mode: mode);
+        checkWalkablePlayer2(pieces, mode: mode);
       }
-    } else if (men.player == 1) {
-      if (men.isKing) {
+    } else if (pieces.player == 1) {
+      if (pieces.isKing) {
         listTempForKingWalkCalculation.clear();
-        checkWalkableKing(men, mode);
+        checkWalkableKing(pieces, mode);
       } else {
-        checkWalkablePlayer1(men, mode: mode);
+        checkWalkablePlayer1(pieces, mode: mode);
       }
     }
   }
 
-  bool checkWalkablePlayer1(Men men, {int mode = MODE_WALK_NORMAL}) {
-    bool movableLeft = checkWalkablePlayer1Left(men.coordinate, mode: mode);
-
+  bool checkWalkablePlayer1(Pieces pieces, {int mode = MODE_WALK_NORMAL}) {
+    bool movableLeft = checkWalkablePlayer1Left(pieces.coordinate, mode: mode);
     bool movableRight = checkWalkablePlayer1Right(
-      men.coordinate,
+      pieces.coordinate,
       mode: mode,
     );
-
     return movableLeft || movableRight;
   }
 
-  bool checkWalkablePlayer2(Men men, {int mode = MODE_WALK_NORMAL}) {
-    bool movableLeft = checkWalkablePlayer2Left(men.coordinate, mode: mode);
+  bool checkWalkablePlayer2(Pieces pieces, {int mode = MODE_WALK_NORMAL}) {
+    bool movableLeft = checkWalkablePlayer2Left(pieces.coordinate, mode: mode);
 
-    bool movableRight = checkWalkablePlayer2Right(men.coordinate, mode: mode);
+    bool movableRight =
+        checkWalkablePlayer2Right(pieces.coordinate, mode: mode);
 
     return movableLeft || movableRight;
   }
@@ -120,15 +145,16 @@ class GameTable {
     required Coordinate next,
     required Coordinate nextIfKilling,
   }) {
-    if (hasMen(next)) {
-      if (hasMenEnemy(next)) {
-        if (isBlockAvailable(nextIfKilling) && !hasMen(nextIfKilling)) {
-          print("x = $mode");
+    if (hasPieces(next)) {
+      if (hasPiecesEnemy(next)) {
+        if (isBlockAvailable(nextIfKilling) && !hasPieces(nextIfKilling)) {
+          print("mode = $mode");
           if (mode == MODE_WALK_NORMAL || mode == MODE_WALK_AFTER_KILLING) {
             setHighlightWalkableAfterKilling(nextIfKilling);
           }
 
-          Killed killed = Killed(isKilled: true, men: getBlockTable(next).men);
+          Killed killed =
+              Killed(isKilled: true, pieces: getBlockTable(next).pieces);
           getBlockTable(nextIfKilling).victim = killed;
 
           if (isWalkableAfterKilling(nextIfKilling, killed)) {
@@ -139,6 +165,8 @@ class GameTable {
         }
       }
     } else {
+      print(next.row);
+      print(next.col);
       if (mode == MODE_WALK_NORMAL) {
         setHighlightWalkable(next);
         return true;
@@ -179,27 +207,27 @@ class GameTable {
   }
 
   setHighlightWalkable(Coordinate coor) {
-    if (isBlockAvailable(coor) && !hasMen(coor)) {
+    if (isBlockAvailable(coor) && !hasPieces(coor)) {
       getBlockTable(coor).isHighlight = true;
     }
   }
 
   setHighlightWalkableAfterKilling(Coordinate coor) {
-    if (isBlockAvailable(coor) && !hasMen(coor)) {
+    if (isBlockAvailable(coor) && !hasPieces(coor)) {
       getBlockTable(coor).isHighlightAfterKilling = true;
     }
   }
 
-  bool hasMen(Coordinate coor) {
+  bool hasPieces(Coordinate coor) {
     if (isBlockAvailable(coor)) {
-      return getBlockTable(coor).men != null;
+      return getBlockTable(coor).pieces != null;
     }
     return false;
   }
 
-  bool hasMenEnemy(Coordinate coor) {
-    if (hasMen(coor)) {
-      return getBlockTable(coor).men.player != currentPlayerTurn;
+  bool hasPiecesEnemy(Coordinate coor) {
+    if (hasPieces(coor)) {
+      return getBlockTable(coor).pieces.player != currentPlayerTurn;
     }
     return false;
   }
@@ -208,16 +236,17 @@ class GameTable {
     if (coor == null) {
       return false;
     }
+    // print("OR WHAT?");
     return coor.row >= 0 &&
         coor.row < countRow &&
         coor.col >= 0 &&
         coor.col < countCol;
   }
 
-  moveMen(Men men, Coordinate newCoordinate) {
-    getBlockTable(men.coordinate).men = null;
-    getBlockTable(newCoordinate).men = men;
-    men.coordinate = newCoordinate;
+  movePieces(Pieces pieces, Coordinate newCoordinate) {
+    getBlockTable(pieces.coordinate).pieces = null;
+    getBlockTable(newCoordinate).pieces = pieces;
+    pieces.coordinate = newCoordinate;
   }
 
   togglePlayerTurn() {
@@ -230,29 +259,34 @@ class GameTable {
 
   bool checkKilled(Coordinate coor) {
     Killed? killing = getBlockTable(coor).victim;
+    print("RRRRRRRRRRRRRRRRRRRRRRRRRR");
     if (killing != null && killing.isKilled) {
-      getBlockTable(killing.men.coordinate).men = null;
+      var all_pieces = Pieces.all_pieces;
+      all_pieces.remove(killing.pieces);
+      Pieces.set_all_pieces(all_pieces);
+      getBlockTable(killing.pieces.coordinate).pieces = null;
+
       return true;
     }
     return false;
   }
 
-  bool checkKillableMore(Men men, Coordinate coor) {
-    if (men.isKing) {
+  bool checkKillableMore(Pieces pieces, Coordinate coor) {
+    if (pieces.isKing) {
       listTempForKingWalkCalculation.clear();
-      return checkWalkableKing(men, MODE_AFTER_KILLING);
+      return checkWalkableKing(pieces, MODE_AFTER_KILLING);
     } else {
       return getBlockTable(coor).killableMore;
     }
   }
 
-  void addMen(Coordinate coor, {int player = 1, bool isKing = false}) {
+  void addPieces(Coordinate coor, {int player = 1, bool isKing = false}) {
     if (!isBlockTypeF(coor)) {
-//      List<Men> listMen = player == 1 ? listMenPlayer1 : listMenPlayer2;
-      Men men =
-          Men(player: player, coordinate: Coordinate.of(coor), isKing: isKing);
-//      listMen.add(men);
-      getBlockTable(coor).men = men;
+//      List<Pieces> listPieces = player == 1 ? listPiecesPlayer1 : listPiecesPlayer2;
+      Pieces pieces = Pieces(
+          player: player, coordinate: Coordinate.of(coor), isKing: isKing);
+//      listPieces.add(pieces);
+      getBlockTable(coor).pieces = pieces;
     }
   }
 
@@ -273,23 +307,27 @@ class GameTable {
     }
   }
 
-  bool checkWalkableKing(Men men, int mode) {
-    Killed killable1 = checkWalkableKingPath(men, mode, addRow: -1, addCol: -1);
-    Killed killable2 = checkWalkableKingPath(men, mode, addRow: -1, addCol: 1);
-    Killed killable3 = checkWalkableKingPath(men, mode, addRow: 1, addCol: -1);
-    Killed killable4 = checkWalkableKingPath(men, mode, addRow: 1, addCol: 1);
+  bool checkWalkableKing(Pieces pieces, int mode) {
+    Killed killable1 =
+        checkWalkableKingPath(pieces, mode, addRow: -1, addCol: -1);
+    Killed killable2 =
+        checkWalkableKingPath(pieces, mode, addRow: -1, addCol: 1);
+    Killed killable3 =
+        checkWalkableKingPath(pieces, mode, addRow: 1, addCol: -1);
+    Killed killable4 =
+        checkWalkableKingPath(pieces, mode, addRow: 1, addCol: 1);
     return killable1.isKilled ||
         killable2.isKilled ||
         killable3.isKilled ||
         killable4.isKilled;
   }
 
-  Killed checkWalkableKingPath(Men men, int mode,
+  Killed checkWalkableKingPath(Pieces pieces, int mode,
       {int addRow = 0, int addCol = 0}) {
     print("checkWalkableKingPath");
-    Killed killable = Killed(men: men);
-    int row = men.coordinate.row + addRow;
-    int col = men.coordinate.col + addCol;
+    Killed killable = Killed(pieces: pieces);
+    int row = pieces.coordinate.row + addRow;
+    int col = pieces.coordinate.col + addCol;
 
     if (row < 0 || row > countRow || col < 0 || col > countCol) {
       return killable;
@@ -309,9 +347,9 @@ class GameTable {
         return killable;
       } else {
         listTempForKingWalkCalculation.add(currentCoor);
-        for (Coordinate c in listTempForKingWalkCalculation) {
-          print("Temp = (${c.row},${c.col})");
-        }
+        // for (Coordinate c in listTempForKingWalkCalculation) {
+        //   print("Temp = (${c.row},${c.col})");
+        // }
       }
 
       bool walkable = checkWalkableKingInBlock(mode, currentCoor,
@@ -332,7 +370,7 @@ class GameTable {
 
           print("${newCoor.row},${newCoor.col}");
           bool killableMore = checkWalkableKing(
-              Men.of(men, newCoor: newCoor), MODE_AFTER_KILLING);
+              Pieces.of(pieces, newCoor: newCoor), MODE_AFTER_KILLING);
 
           print("killableMore = $killableMore");
           getBlockTable(newCoor).killableMore = killableMore;
@@ -359,7 +397,7 @@ class GameTable {
       OnKingWalkable? onKingWalkable,
       OnKingWalkableAfterKilling? onKingWalkableAfterKilling,
       OnKingUnWalkable? onKingUnwalkable}) {
-    if (!hasMen(coor)) {
+    if (!hasPieces(coor)) {
       if (mode == MODE_WALK_NORMAL) {
         setHighlightWalkable(coor);
       }
@@ -369,14 +407,14 @@ class GameTable {
       }
       return true;
     } else {
-      if (hasMenEnemy(coor)) {
-        Men enemyKilled = getBlockTable(coor).men;
+      if (hasPiecesEnemy(coor)) {
+        Pieces enemyKilled = getBlockTable(coor).pieces;
         Coordinate nextCoorAfterKill =
             Coordinate.of(coor, addRow: addRow, addCol: addCol);
-        if (!hasMen(nextCoorAfterKill)) {
+        if (!hasPieces(nextCoorAfterKill)) {
           if (onKingWalkableAfterKilling != null) {
             onKingWalkableAfterKilling(
-                nextCoorAfterKill, Killed(isKilled: true, men: enemyKilled));
+                nextCoorAfterKill, Killed(isKilled: true, pieces: enemyKilled));
           }
           return false;
         }

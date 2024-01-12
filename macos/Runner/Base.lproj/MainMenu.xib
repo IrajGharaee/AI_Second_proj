@@ -15,16 +15,16 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customObject id="Voe-Tx-rLC" customClass="AppDelegate" customModule="Runner" customModuleProvider="target">
             <connections>
-                <outlet property="applicationMenu" destination="uQy-DD-JDr" id="XBo-yE-nKs"/>
+                <outlet property="applicationPiecesu" destination="uQy-DD-JDr" id="XBo-yE-nKs"/>
                 <outlet property="mainFlutterWindow" destination="QvC-M9-y7g" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
         <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
-        <menu title="Main Menu" systemMenu="main" id="AYu-sK-qS6">
+        <menu title="Main Piecesu" systemPiecesu="main" id="AYu-sK-qS6">
             <items>
                 <menuItem title="APP_NAME" id="1Xt-HY-uBw">
                     <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="APP_NAME" systemMenu="apple" id="uQy-DD-JDr">
+                    <menu key="submenu" title="APP_NAME" systemPiecesu="apple" id="uQy-DD-JDr">
                         <items>
                             <menuItem title="About APP_NAME" id="5kV-Vb-QxS">
                                 <modifierMask key="keyEquivalentModifierMask"/>
@@ -37,7 +37,7 @@
                             <menuItem isSeparatorItem="YES" id="wFC-TO-SCJ"/>
                             <menuItem title="Services" id="NMo-om-nkz">
                                 <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" title="Services" systemMenu="services" id="hz9-B4-Xy5"/>
+                                <menu key="submenu" title="Services" systemPiecesu="services" id="hz9-B4-Xy5"/>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="4je-JR-u6R"/>
                             <menuItem title="Hide APP_NAME" keyEquivalent="h" id="Olw-nP-bQN">
@@ -300,7 +300,7 @@
                 </menuItem>
                 <menuItem title="Window" id="aUF-d1-5bR">
                     <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="Window" systemMenu="window" id="Td7-aD-5lo">
+                    <menu key="submenu" title="Window" systemPiecesu="window" id="Td7-aD-5lo">
                         <items>
                             <menuItem title="Minimize" keyEquivalent="m" id="OY7-WF-poV">
                                 <connections>
@@ -325,7 +325,7 @@
                 </menuItem>
                 <menuItem title="Help" id="EPT-qC-fAb">
                     <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="Help" systemMenu="help" id="rJ0-wn-3NY"/>
+                    <menu key="submenu" title="Help" systemPiecesu="help" id="rJ0-wn-3NY"/>
                 </menuItem>
             </items>
             <point key="canvasLocation" x="142" y="-258"/>
